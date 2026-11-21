@@ -1,55 +1,64 @@
-import { useEffect } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
+import { Toaster } from "sonner";
+import ClerkAuthProvider from "@/components/auth/ClerkAuthProvider";
+import { AppProvider } from "@/context/AppContext";
+import Layout from "@/components/Layout";
+import Welcome from "@/pages/Welcome";
+import Language from "@/pages/Language";
+import Topics from "@/pages/Topics";
+import StatePick from "@/pages/StatePick";
+import Questions from "@/pages/Questions";
+import Results from "@/pages/Results";
+import Compare from "@/pages/Compare";
+import SchemeDetail from "@/pages/SchemeDetail";
+import Recommendation from "@/pages/Recommendation";
+import Saved from "@/pages/Saved";
+import Help from "@/pages/Help";
+import Privacy from "@/pages/Privacy";
+import Admin from "@/pages/Admin";
+import { SignInPage, SignUpPage } from "@/pages/AuthPages";
+import { useEffect } from "react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    // The marker attribute below lets the platform probe detect the stock splash — remove it with this page
-    <div data-emergent-splash>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+function ScrollTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <MotionConfig reducedMotion="user">
+        <BrowserRouter>
+          <ClerkAuthProvider>
+            <AppProvider>
+              <ScrollTop />
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Welcome />} />
+                  <Route path="/language" element={<Language />} />
+                  <Route path="/topics" element={<Topics />} />
+                  <Route path="/state" element={<StatePick />} />
+                  <Route path="/questions" element={<Questions />} />
+                  <Route path="/results" element={<Results />} />
+                  <Route path="/compare" element={<Compare />} />
+                  <Route path="/scheme/:id" element={<SchemeDetail />} />
+                  <Route path="/recommendation" element={<Recommendation />} />
+                  <Route path="/saved" element={<Saved />} />
+                  <Route path="/help" element={<Help />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/sign-in/*" element={<SignInPage />} />
+                  <Route path="/sign-up/*" element={<SignUpPage />} />
+                </Route>
+              </Routes>
+              <Toaster position="top-center" richColors closeButton />
+            </AppProvider>
+          </ClerkAuthProvider>
+        </BrowserRouter>
+      </MotionConfig>
     </div>
   );
 }

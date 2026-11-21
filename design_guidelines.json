@@ -1,0 +1,214 @@
+{
+  "project_name": "Scheme Saathi - Central & State Welfare Discovery Engine",
+  "archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST + ARCHETYPE 2: THE PERFORMANCE PRO with Tactile Indian Civic Minimalism",
+  "overview": "Scheme Saathi is an ultra-crisp, mobile-first web app empowering Indian citizens across 36 States/UTs to discover, compare, and apply for government welfare schemes in English, Hindi, and Bengali. The aesthetic balances deep midnight authority with precision lime triggers, tactile cards, bilingual typography, and instant high-clarity filtering.",
+  "theme_strategy": {
+    "default_theme": "dark_primary_with_high_readability_surfaces",
+    "description": "Uses Midnight Black (#0B0B0C) as the anchor for the hero, header, bottom navigation bar, and key visual modules. For dense scheme descriptions, comparison tables, and reading-heavy documentation checklists, use soft neutral dark zinc or crisp light paper cards with deep typography to eliminate eye fatigue. Never apply full-bleed lime green backgrounds. Lime is reserved strictly as a kinetic trigger (active tags, primary CTA, verified badges, match score rings)."
+  },
+  "palette": {
+    "midnight_black": "#0B0B0C",
+    "pure_white": "#FFFFFF",
+    "lime_accent": "#C6F432",
+    "lime_accent_muted": "rgba(198, 244, 50, 0.15)",
+    "lime_glow": "0 0 24px rgba(198, 244, 50, 0.18)",
+    "surface_dark": "#121214",
+    "surface_elevated": "#18181B",
+    "surface_elevated_2": "#222226",
+    "border_subtle": "#27272A",
+    "border_active": "#C6F432",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "text_tertiary": "#71717A",
+    "badge_central_bg": "#1E293B",
+    "badge_central_text": "#38BDF8",
+    "badge_state_bg": "#2E1065",
+    "badge_state_text": "#C084FC",
+    "success_green": "#22C55E",
+    "warning_amber": "#F59E0B"
+  },
+  "typography": {
+    "font_family_latin": "'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif",
+    "font_family_devanagari": "'Rozha One', 'Noto Sans Devanagari', 'Tiro Devanagari Hindi', sans-serif",
+    "font_family_bengali": "'Noto Sans Bengali', 'Tiro Bengali', sans-serif",
+    "font_family_mono": "'JetBrains Mono', 'Fira Code', monospace",
+    "rules": {
+      "H1": "text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white leading-tight",
+      "H2": "text-2xl sm:text-3xl font-semibold tracking-tight text-white",
+      "H3": "text-lg sm:text-xl font-medium tracking-normal text-zinc-100",
+      "H4_CardTitle": "text-base sm:text-lg font-semibold text-white",
+      "Overline": "text-xs font-mono uppercase tracking-[0.2em] text-[#C6F432]",
+      "Body": "text-sm sm:text-base leading-relaxed text-zinc-300",
+      "Meta_Small": "text-xs text-zinc-400"
+    }
+  },
+  "image_urls": {
+    "citizen_elderly": {
+      "url": "https://images.pexels.com/photos/35854307/pexels-photo-35854307.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "category": "Hero & Social Security / Pension showcase",
+      "description": "Joyful elderly Indian woman representing social security, pensions, and dignity schemes."
+    },
+    "citizen_youth": {
+      "url": "https://images.unsplash.com/photo-1749700332031-cf99864959ea?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBjaXRpemVuJTIwc21pbGluZ3xlbnwwfHx8fDE3OTUyMzg4NTl8MA&ixlib=rb-4.1.0&q=85",
+      "category": "Youth & Skill Training",
+      "description": "Smiling Indian youth woman for skill training, startup loans, and employment."
+    },
+    "agriculture_farmer": {
+      "url": "https://images.pexels.com/photos/29039800/pexels-photo-29039800.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "category": "Farming & Crop Insurance Category",
+      "description": "Farmer in agricultural field representing PM-KISAN, crop insurance, and agri subsidies."
+    },
+    "student_scholarship": {
+      "url": "https://images.unsplash.com/photo-1692269725911-87697c558be1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHw0fHxzdHVkZW50JTIwc3R1ZHlpbmclMjBpbmRpYXxlbnwwfHx8fDE3OTUyMzg4NTl8MA&ixlib=rb-4.1.0&q=85",
+      "category": "Education & Scholarships",
+      "description": "Young students in classroom representing national and state pre/post matric scholarships."
+    }
+  },
+  "application_architecture": {
+    "routing_flow": [
+      {
+        "step": 0,
+        "name": "Welcome / Hero",
+        "description": "One sentence punchline: 'Find welfare schemes tailored for your life, family, and future across India.' with prominent 'Find Schemes' CTA button in Lime Green, Language Switcher pills (English, Hindi, Bengali), and quick citizen stats (350+ Central & State Schemes, 100% Free & Unbiased)."
+      },
+      {
+        "step": 1,
+        "name": "Language Selection",
+        "description": "Whole UI translates immediately between EN (English), HI (हिंदी), BN (বাংলা). Language bar remains fixed & always accessible at the top header with active pill indicator."
+      },
+      {
+        "step": 2,
+        "name": "Topic Selection Multi-Select",
+        "description": "High-contrast tactile icon cards for 8 domains: 1. Study & scholarships, 2. Farming & crop insurance, 3. Business & self-employment, 4. Jobs & skill training, 5. Health & insurance, 6. Housing & basic needs, 7. Family, pensions & social support, 8. Browse all. Selected cards activate a 1.5px Lime border and checkmark."
+      },
+      {
+        "step": 3,
+        "name": "State & Jurisdiction Selector",
+        "description": "Searchable State/UT combobox covering all 36 States & Union Territories. Segmented toggle for 'Central Only' vs 'Central + State schemes'."
+      },
+      {
+        "step": 4,
+        "name": "Guided 1-Question-at-a-Time Wizard",
+        "description": "Calm, focused screen with animated progress bar (Lime). Questions: Age bracket, Gender & marital status, Employment/Occupation, Annual Household Income bracket, Category/Caste (General/OBC/SC/ST/Minority), Specially-Abled status (PwD). Action buttons: 'Back', 'Continue' (Lime), 'Skip', 'I am not sure', 'Prefer not to say'. Includes an expandable 'Why we ask this' drawer/hint for transparency."
+      },
+      {
+        "step": 5,
+        "name": "Results Engine with 'Why Matched'",
+        "description": "List view of schemes with instant filter tabs (All, Central, State, Scholarship, Direct Cash, Insurance), Sort by (Relevance, Deadline, Benefit Value). Each card displays 'Why it appeared' tag matching user profile attributes, verification badge, and quick Compare checkbox (up to 3 schemes)."
+      },
+      {
+        "step": 6,
+        "name": "AI Recommendation & Document Checklist",
+        "description": "Prominent top highlight: 'Best Match Based on Your Answers' (explicitly labeled 'Indicative recommendation, not guaranteed official allotment'). Side-by-side interactive Document Readiness Checklist (Aadhaar, Income Certificate, Caste Certificate, Bank Passbook, Ration Card, Land Records) with download/print or save toggle."
+      },
+      {
+        "step": 7,
+        "name": "Compare Schemes Drawer / Modal",
+        "description": "Side-by-side comparison matrix for up to 3 chosen schemes comparing: Direct Financial Benefits, Eligibility Criteria, Mandatory Documents, Application Method (Online/Offline/CSC Centre), Jurisdiction (Central/State), Application Deadlines."
+      },
+      {
+        "step": 8,
+        "name": "Scheme Deep-Dive Details Page / View",
+        "description": "Full scheme anatomy: Official scheme title in dual script, summary, quantified benefits, who qualifies, why you matched, key requirements to double-check, required documents list, step-by-step numbered application walk-through, official direct portal apply link, verified date stamp, save to bookmarks, and share sheet."
+      },
+      {
+        "step": 9,
+        "name": "Admin Portal & Scheme Management",
+        "description": "CRUD interface for administrators to create, edit, verify, archive, and view multi-language translations (English/Hindi/Bengali) of central and state schemes."
+      },
+      {
+        "step": 10,
+        "name": "Help/FAQ & Privacy Guarantee",
+        "description": "Zero personal data stored without consent, offline-first localStorage bookmarking, optional simulated Google Sign-in to sync saved schemes, and text-to-speech voice read-aloud support."
+      }
+    ]
+  },
+  "ui_components_specification": {
+    "header": {
+      "style": "sticky top-0 z-50 backdrop-blur-xl bg-[#0B0B0C]/85 border-b border-zinc-800/80 px-4 sm:px-6 py-3",
+      "elements": [
+        "Brand Logo: 'Scheme Saathi' with national tricolor subtle emblem dot and Lime badge 'Govt Scheme Finder'",
+        "Language Switcher: 3-way toggle (English | हिंदी | বাংলা) with animated sliding pill",
+        "Saved Schemes Counter: Bookmark icon with active count badge",
+        "Admin Portal switch button"
+      ]
+    },
+    "primary_button": {
+      "class": "bg-[#C6F432] text-[#0B0B0C] font-semibold hover:bg-[#b8e826] active:scale-[0.98] transition-transform transition-colors shadow-sm rounded-xl px-5 py-3 flex items-center justify-center gap-2",
+      "testid": "find-schemes-button"
+    },
+    "secondary_button": {
+      "class": "bg-[#18181B] border border-zinc-700/80 text-white font-medium hover:bg-zinc-800 active:scale-[0.98] transition-transform transition-colors rounded-xl px-4 py-2.5",
+      "testid": "secondary-action-button"
+    },
+    "scheme_card": {
+      "class": "bg-[#121214] border border-zinc-800 hover:border-zinc-700 transition-all rounded-2xl p-5 sm:p-6 relative flex flex-col justify-between group",
+      "hover_effect": "Hover lift with subtle lime glow border highlight, never jarring"
+    },
+    "topic_grid": {
+      "class": "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4",
+      "card_style": "p-4 sm:p-5 rounded-2xl border text-left cursor-pointer transition-all duration-200"
+    }
+  },
+  "data_testid_conventions": {
+    "welcome_find_btn": "welcome-find-schemes-btn",
+    "language_switcher_prefix": "lang-switch-",
+    "topic_card_prefix": "topic-card-",
+    "topic_continue_btn": "topic-continue-btn",
+    "state_search_input": "state-search-input",
+    "jurisdiction_toggle": "jurisdiction-toggle-btn",
+    "state_continue_btn": "state-continue-btn",
+    "wizard_question_title": "wizard-question-title",
+    "wizard_option_prefix": "wizard-option-",
+    "wizard_next_btn": "wizard-next-btn",
+    "wizard_back_btn": "wizard-back-btn",
+    "wizard_skip_btn": "wizard-skip-btn",
+    "wizard_hint_toggle": "wizard-why-we-ask-hint",
+    "results_count_badge": "results-count-badge",
+    "scheme_card_prefix": "scheme-card-",
+    "scheme_apply_btn_prefix": "scheme-apply-btn-",
+    "scheme_compare_checkbox_prefix": "scheme-compare-check-",
+    "compare_tray_button": "compare-open-tray-btn",
+    "compare_modal": "compare-modal-content",
+    "ai_recommendation_card": "ai-recommendation-card",
+    "doc_checklist_container": "document-checklist-container",
+    "doc_item_checkbox_prefix": "doc-checklist-item-",
+    "admin_nav_btn": "admin-portal-nav-btn",
+    "admin_add_scheme_btn": "admin-add-scheme-btn",
+    "admin_scheme_row_prefix": "admin-scheme-row-"
+  },
+  "internationalization_sample_dictionary": {
+    "languages": ["en", "hi", "bn"],
+    "keys": {
+      "brand_tagline": {
+        "en": "Find government welfare schemes tailored for your life, family, and future across India.",
+        "hi": "भारत भर में अपने जीवन, परिवार और भविष्य के लिए उपयुक्त सरकारी योजनाएं खोजें।",
+        "bn": "সারা ভারতে আপনার জীবন, পরিবার ও ভবিষ্যতের জন্য সরকারি কল্যাণমূলক প্রকল্প খুঁজুন।"
+      },
+      "cta_find": {
+        "en": "Find Schemes Now",
+        "hi": "अभी योजनाएं खोजें",
+        "bn": "এখনই প্রকল্প খুঁজুন"
+      },
+      "why_matched": {
+        "en": "Why matched for you",
+        "hi": "आपके लिए क्यों उपयुक्त",
+        "bn": "আপনার জন্য কেন উপযুক্ত"
+      },
+      "verified_badge": {
+        "en": "Verified Official Scheme",
+        "hi": "सत्यापित आधिकारिक योजना",
+        "bn": "যাচাইকৃত সরকারি প্রকল্প"
+      }
+    }
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": {
+    "rule_1": "Implement the complete end-to-end multi-step flow without mock cutoffs. Allow the user to navigate fluidly: Welcome -> Topics -> State -> Wizard Questionnaire -> Results -> Scheme Detail -> Compare Modal -> Document Checklist -> Admin CRUD.",
+    "rule_2": "Honor the strict color palette: Midnight black (#0B0B0C) background with zinc dark containers (#121214, #18181B), pure white headings, zinc-400 secondary text, and vibrant Lime green (#C6F432) exclusively for active indicators, primary CTA buttons, selection rings, and verified checkmarks.",
+    "rule_3": "Multilingual UI: Implement an instant language switcher for English, Hindi (हिंदी), and Bengali (বাংলা) that dynamically switches titles, buttons, topics, and question prompts.",
+    "rule_4": "Include at least 16+ comprehensive authentic Central & State Indian schemes (e.g. PM-KISAN, Ayushman Bharat PM-JAY, Pre-Matric SC/ST Scholarship, Pradhan Mantri Awas Yojana - Urban & Gramin, Mudra Yojana, Sukanya Samriddhi Yojana, Atal Pension Yojana, Lakhpati Didi, PM Vishwakarma, State schemes like Kanyashree Prakalpa (West Bengal), Mukhyamantri Kisan Kalyan Yojana (MP), Rythu Bandhu (Telangana), etc.) with complete eligibility formulas, document lists, and official links.",
+    "rule_5": "All buttons, inputs, tabs, and scheme cards MUST have exact data-testid attributes as documented for testing automation.",
+    "rule_6": "Include Admin Management mode allowing the user to create new schemes, toggle verified status, edit benefit details, and test multilingual translations.",
+    "rule_7": "Ensure responsive mobile optimization: generous tap targets (min 44px), sticky bottom comparison drawer when items are selected, and clean one-question wizard transitions."
+  }
+}
