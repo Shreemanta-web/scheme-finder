@@ -1,0 +1,27 @@
+{
+  "summary": "Regression run after the code-quality refactor, backend only. Full suite in /app/backend/tests: 36/37 pass. The one failure is TestAI::test_recommend_bn. It asserts source=='ai' but got 'rules' with ai_reason 'failed'. Cause: Gemini fails on every model (ClientError 429 quota, plus one TimeoutError in backend.err.log), the same environment problem as in iteration 2. The refactor did not cause it. New test_iteration3_refactor.py: 13/13 pass. It checks: all 21 seed ids load; ab-pmjay application_url is beneficiary.nha.gov.in and pmmy's is jansamarth.in, with the correct official_url; mode, states and exclusions are passed through **opts correctly; the farmer-WB match returns pm-kisan, krishak-bandhu and pmfby, with pm-kisan 'strong'; a taxpayer is excluded from pm-kisan with failed=['taxpayer'...]; unknown answers become pending; recommend best_scheme_id is always in the top-5 candidates; scheme_ids narrowing works; no candidates gives source 'none'. The 5 split admin CRUD tests (create/read, update, verify, archive hides, restore), auth roles, saved isolation and explain?lang=hi all pass. Code review of the diff: behaviour is the same. _known_values now guards None, which is equivalent. _ai_recommendation now also handles rec None safely.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/recommend (AI path)", "issue": "Gemini quota/availability is still failing (429 ClientError on gemini-3.8/3.7/3.5-flash). Every recommendation falls back to rules. Not a refactor regression.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "tests/test_scheme_saathi_api.py::TestAI::test_recommend_bn", "issue": "The test hard-asserts source=='ai', so it fails whenever Gemini is down. Consider asserting source in ('ai','rules'), or skipping when ai_reason=='failed'."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_scheme_saathi_api.py", "/app/backend/tests/test_iteration2_fixes.py", "/app/backend/tests/test_iteration3_refactor.py", "/app/test_reports/pytest/iter3_results.xml", "/app/test_reports/pytest/iter3_refactor.xml"],
+  "action_items": [
+    "Restore the Gemini quota/billing, or use a key with quota.",
+    "Optionally make TestAI::test_recommend_bn tolerant of the rules fallback."
+  ],
+  "critical_code_review_comments": [
+    "_ai_response uses next() with no default. It is safe only because _ai_recommendation checks best_scheme_id against the candidates, which are built from ranked. Keep that coupling, or add a default to avoid StopIteration.",
+    "In matching.match, the result tuple uses `(excluded if bad else results).append(bad or result)`, which is correct but terse. A plain if/else would read more clearly."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration3_refactor.py"],
+  "success_rate": {"backend": "98% (49/50; the only failure is caused by the Gemini quota, not the refactor)", "frontend": "not tested (backend-only request)"},
+  "seed_data_creation": "None. The admin CRUD tests create TEST_ schemes and delete them in their own teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: cd /app/backend/tests && python -m pytest . -c /app/backend/pytest.ini -v -o addopts=''. test_recommend_bn depends on Gemini quota. Last checked: Gemini still returns 429."
+}

@@ -20,6 +20,13 @@ Mobile-first web app to discover Indian government welfare schemes (Central + St
 - Privacy: no Aadhaar/bank/doc fields, only bucketed answers sent to Gemini, logs exclude bodies
 - Tested: iteration 1 & 2 (all fixes verified)
 
+## Code quality refactor (2026-11)
+- `server.py`: `_ai_recommendation` now explicitly initialises `rec=None`; `recommend()` split into `_rank_candidates` + `_ai_response` helpers to lower complexity
+- `matching.py`: full type hints added; `evaluate()` extracted `_iter_criteria_statuses`; `match()` extracted `_result_for` to reduce branching
+- `seed_data.py`: `scheme()` now accepts optional fields (states, mode, exclusions, criteria, application_url) via `**opts` — signature reduced from 19 to 14 params; two seed call sites updated to pass application_url as kwarg
+- `tests/test_scheme_saathi_api.py`: `test_crud_flow` split into 5 focused tests; `is True` → `== True` on 4 assertions
+- Verified: iteration 3 — 36/37 existing tests pass + 13/13 new regression tests pass; one unrelated AI test fails due to Gemini 429 quota (pre-existing environment issue)
+
 ## Known issue
 - User's Gemini key currently returns 429 quota exhausted → app falls back to rules-based suggestions and English text for uncached schemes
 
