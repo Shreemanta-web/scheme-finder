@@ -1,0 +1,39 @@
+{
+  "summary": "Iteration 2 retest. All 5 fixes and both new items work. Broaden now sends topics ['all'] and shows 13 cards. /recommend and /explain answered in under 52s, and fell back to the rules JSON (source 'rules', ai_reason 'failed') when Gemini failed. Signed-in save buttons are disabled with aria-busy while the merge loads. The correct toast shows after loading, and a forced 500 shows the error toast. Archived schemes return 404 on save, and merge leaves them out. Admin 422 messages carry the field path. In HI/BN, cached AI explanations replace the English in compare cells and checklist items. The Indic eyebrow has letter-spacing normal and text-transform none. The mobile core flow (390px, HI) works: welcome, language, topics, state, 7 questions, results (3), detail, recommendation. Open problem: the Gemini key is out of quota. All 3 models return 429 'You exceeded your current quota', so every live AI call falls back to rules, and uncached schemes stay in English in HI/BN.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/recommend, /api/schemes/{id}/explain", "issue": "Gemini key quota is used up: gemini-3.8-flash, 3.7-flash and 3.5-flash all return 429 RESOURCE_EXHAUSTED. Fallback works, but there are no AI recommendations and no new HI/BN translations until quota or billing is restored. In this state, compare/checklist cells for uncached schemes (e.g. ssy in HI) stay English indefinitely.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "/api/schemes/{id}/explain", "issue": "Failures are not cached even briefly. Every page view retries the full model chain, which burns quota."},
+      {"endpoint": "/api/schemes/{id}/explain", "issue": "Concurrent first calls for the same scheme/lang each call Gemini. The upsert on the unique index (scheme_id, lang, version) can raise DuplicateKeyError and return 500. Only seen in code review, not reproduced while quota was out."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Recommendation page HI/BN", "issue": "useExplanations runs once per component: NextSteps, Checklist and others each call it. The page sent 4 identical GET /schemes/krishak-bandhu/explain requests. When the scheme is not cached, each one triggers its own Gemini call: 4x quota and a duplicate-key risk. Fetch once and share the result (context, a module-level promise cache, or pass it as a prop).", "affected_selectors": ["[data-testid^=doc-checklist-item-]"]},
+      {"flow": "Compare/Checklist HI/BN when AI fails", "issue": "English text is shown silently with no note that the translation is not available.", "affected_selectors": ["[data-testid^=compare-cell-]"]}
+    ],
+    "design_issues": [
+      {"screen": "Results card (390px)", "issues": ["The 'View details' button text wraps onto 2 lines next to Compare and Save"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_iteration2_fixes.py", "/app/test_reports/pytest/iter2_results.xml"],
+  "action_items": [
+    "Restore the Gemini quota/billing, or use a key with quota. All models return 429.",
+    "Dedupe explain requests on the frontend (one fetch per id+lang per page) and add server-side in-flight dedupe.",
+    "Catch DuplicateKeyError on the explanations upsert.",
+    "Optionally cache explain failures for a short time (negative cache) and show a 'translation unavailable' note."
+  ],
+  "critical_code_review_comments": [
+    "AppContext: if the merge fails, the catch sets accountSaved to [] silently. The user then sees an empty saved list with no error.",
+    "errorText shows raw field keys (official_url) in English even in HI/BN. Acceptable for admins."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration2_fixes.py"],
+  "success_rate": {"backend": "100% (8/8 retest cases; 2 first-run failures were my own wrong payload)", "frontend": "100% of retested flows"},
+  "seed_data_creation": "Created TEST_Archived It2 scheme via the admin API and deleted it in teardown. Member saved list cleared. Verified that no TEST_ schemes or saved rows remain.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run with: cd /app/backend/tests && python -m pytest test_iteration2_fixes.py -c /app/backend/pytest.ini (add -o addopts='' -s to see prints). The original test_scheme_saathi_api.py TestAI asserts source=='ai', so it fails while the Gemini quota is out (429). Cached explanations exist for: pm-kisan/hi, pmsby/hi, kanyashree/hi, krishak-bandhu/bn, ab-pmjay/bn, pmay-g/bn, post-matric-sc/bn. The admin form 422 path prefix was checked through the API and code (lib/api.js errorText), not through the admin UI."
+}

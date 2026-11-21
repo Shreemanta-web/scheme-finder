@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, field_validator
 from pymongo import ASCENDING, IndexModel, ReturnDocument
+from pymongo.errors import DuplicateKeyError
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.cors import CORSMiddleware
 
@@ -338,6 +339,27 @@ async def explain(scheme_id: str, lang: Literal["en", "hi", "bn"] = "hi"):
         return {"available": True, "explanation": cached["explanation"]}
     if not ai_configured():
         return {"available": False, "reason": "not_configured"}
+    key = (scheme_id, lang, version)
+    if time.monotonic() < _EXPLAIN_FAILED.get(key, 0):
+        return {"available": False, "reason": "failed"}
+    if key not in _EXPLAIN_INFLIGHT:
+        _EXPLAIN_INFLIGHT[key] = asyncio.ensure_future(_generate_explanation(doc, lang, version))
+    try:
+        data = await asyncio.shield(_EXPLAIN_INFLIGHT[key])
+    finally:
+        if _EXPLAIN_INFLIGHT.get(key) and _EXPLAIN_INFLIGHT[key].done():
+            _EXPLAIN_INFLIGHT.pop(key, None)
+    if data is None:
+        _EXPLAIN_FAILED[key] = time.monotonic() + 120
+        return {"available": False, "reason": "failed"}
+    return {"available": True, "explanation": data}
+
+
+_EXPLAIN_INFLIGHT: dict = {}
+_EXPLAIN_FAILED: dict = {}
+
+
+async def _generate_explanation(doc: dict, lang: str, version: str):
     en = lambda f: (doc.get(f) or {}).get("en") or ([] if f in ("eligibility", "exclusions", "documents", "steps") else "")  # noqa: E731
     record = {f: en(f) for f in ("name", "summary", "description", "benefits", "eligibility", "exclusions", "documents", "steps")}
     record["official_name"] = doc.get("official_name")
@@ -345,11 +367,12 @@ async def explain(scheme_id: str, lang: Literal["en", "hi", "bn"] = "hi"):
     try:
         result = await gemini_json(EXPLAIN_SYSTEM, prompt, Explanation)
     except (AIUnavailable, AIFailed):
-        return {"available": False, "reason": "failed"}
+        return None
     data = result.model_dump()
-    await db.explanations.update_one({"scheme_id": scheme_id, "lang": lang, "version": version},
-                                     {"$set": {"explanation": data, "created_at": datetime.now(timezone.utc).isoformat()}}, upsert=True)
-    return {"available": True, "explanation": data}
+    with suppress(DuplicateKeyError):
+        await db.explanations.update_one({"scheme_id": doc["id"], "lang": lang, "version": version},
+                                         {"$set": {"explanation": data, "created_at": datetime.now(timezone.utc).isoformat()}}, upsert=True)
+    return data
 
 
 @api.post("/recommend")

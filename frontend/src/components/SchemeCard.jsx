@@ -40,7 +40,7 @@ export default function SchemeCard({ result, compared, onCompare }) {
         <ReasonList met={result.met} pending={result.pending} topicHits={result.topic_hits} limit={3} showAnswerLinks={false} />
       </div>
       <div className="mt-auto flex flex-wrap items-center gap-2">
-        <Link to={`/scheme/${s.id}`} data-testid={`scheme-details-btn-${s.id}`} className="btn-ink min-h-[44px] flex-1 sm:flex-none">{t("results.viewDetails")}<ArrowUpRight className="h-4 w-4" aria-hidden /></Link>
+        <Link to={`/scheme/${s.id}`} data-testid={`scheme-details-btn-${s.id}`} className="btn-ink min-h-[44px] flex-1 whitespace-nowrap px-5 sm:flex-none">{t("results.viewDetails")}<ArrowUpRight className="h-4 w-4" aria-hidden /></Link>
         {onCompare && (
           <button role="checkbox" aria-checked={compared} onClick={() => onCompare(s.id)} data-testid={`scheme-compare-check-${s.id}`}
             className={`press inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-medium ${compared ? "border-[#0B0B0C] bg-[#C6F432]" : "border-[#DADAD4] bg-white hover:border-[#0B0B0C]"}`}>
