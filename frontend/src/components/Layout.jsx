@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Show, SignInButton, UserButton } from "@clerk/react";
+import { Show, UserButton } from "@clerk/react";
 import { Bookmark, Menu, ShieldCheck, LifeBuoy, Lock } from "lucide-react";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useApp } from "@/context/AppContext";
@@ -10,7 +10,7 @@ import LangSwitcher from "@/components/LangSwitcher";
 const Logo = ({ t }) => (
   <Link to="/" data-testid="brand-home-link" className="press flex items-center gap-2.5 rounded-full py-1 pr-2">
     <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-[#C6F432] font-display text-lg font-bold text-[#0B0B0C]">S</span>
-    <span className="font-display text-lg font-semibold text-white">{t("common.appName")}</span>
+    <span className="whitespace-nowrap font-display text-lg font-semibold text-white">{t("common.appName")}</span>
   </Link>
 );
 
@@ -41,7 +41,7 @@ function Header() {
         <div className="ml-auto flex items-center gap-2">
           <LangSwitcher />
           <div className="hidden sm:block">
-            <Show when="signed-out"><SignInButton><button data-testid="header-sign-in-btn" className="btn-ghost-dark min-h-[40px] text-sm">{t("common.signIn")}</button></SignInButton></Show>
+            <Show when="signed-out"><Link to="/sign-in" data-testid="header-sign-in-btn" className="btn-ghost-dark min-h-[40px] text-sm">{t("common.signIn")}</Link></Show>
           </div>
           <Show when="signed-in"><div data-testid="header-user-button" className="grid h-10 w-10 place-items-center"><UserButton /></div></Show>
           <Sheet open={open} onOpenChange={setOpen}>
@@ -55,7 +55,7 @@ function Header() {
               <SheetTitle className="font-display">{t("common.menu")}</SheetTitle>
               <nav className="mt-6 flex flex-col gap-1" aria-label={t("a11y.mainNav")}>
                 <NavLinks t={t} me={me} vertical onClick={() => setOpen(false)} />
-                <Show when="signed-out"><SignInButton><button data-testid="mobile-sign-in-btn" className="btn-ink mt-4">{t("common.signIn")}</button></SignInButton></Show>
+                <Show when="signed-out"><Link to="/sign-in" onClick={() => setOpen(false)} data-testid="mobile-sign-in-btn" className="btn-ink mt-4">{t("common.signIn")}</Link></Show>
               </nav>
             </SheetContent>
           </Sheet>
