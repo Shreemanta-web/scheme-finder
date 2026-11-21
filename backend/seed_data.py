@@ -15,15 +15,17 @@ BANK = "Bank account details linked with Aadhaar (given only to the official dep
 
 
 def scheme(id, name, official_name, department, jurisdiction, topics, benefit_type, summary, description, benefits,
-           eligibility, documents, steps, official_url, application_url="", exclusions=None, states=None,
-           mode="online", criteria=None):
+           eligibility, documents, steps, official_url, **opts):
+    """Build a seed scheme record. Optional fields (states, mode, exclusions, criteria, application_url)
+    are passed via keyword-only ``opts`` to keep the signature manageable."""
     return {
         "id": id, "name": name, "official_name": official_name, "department": department,
-        "jurisdiction": jurisdiction, "states": states or [], "topics": topics, "benefit_type": benefit_type,
+        "jurisdiction": jurisdiction, "states": opts.get("states") or [], "topics": topics, "benefit_type": benefit_type,
         "summary": summary, "description": description, "benefits": benefits, "eligibility": eligibility,
-        "exclusions": exclusions or {"en": []}, "documents": documents, "steps": steps,
-        "application_mode": mode, "application_url": application_url or official_url, "official_url": official_url,
-        "application_window": "", "criteria": criteria or {}, "source_status": "unverified",
+        "exclusions": opts.get("exclusions") or {"en": []}, "documents": documents, "steps": steps,
+        "application_mode": opts.get("mode", "online"),
+        "application_url": opts.get("application_url") or official_url, "official_url": official_url,
+        "application_window": "", "criteria": opts.get("criteria") or {}, "source_status": "unverified",
         "last_checked": None, "is_demo": False, "archived": False,
     }
 
@@ -72,7 +74,7 @@ SEED_SCHEMES = [
            E("Aadhaar card", "Ration card or other ID accepted by the portal", "Mobile number"),
            E("Check your name on the official beneficiary portal or call the helpline.", "Visit an empanelled hospital or CSC to get your Ayushman card.",
              "Show the card at the hospital help desk (Ayushman Mitra) when treatment is needed."),
-           "https://pmjay.gov.in/", "https://beneficiary.nha.gov.in/", mode="both",
+           "https://pmjay.gov.in/", application_url="https://beneficiary.nha.gov.in/", mode="both",
            criteria={"list_based": True}),
 
     scheme("pmay-g", L("PM Awas Yojana – Gramin", "पीएम आवास योजना – ग्रामीण", "পিএম আবাস যোজনা – গ্রামীণ"), "Pradhan Mantri Awas Yojana – Gramin",
@@ -112,7 +114,7 @@ SEED_SCHEMES = [
            E("Individuals or small businesses in non-farm income-generating activities", "Must meet the lending bank's credit requirements"),
            E("Identity and address proof", "Business plan or quotation", "Proof of business (if existing)", "Photographs"),
            E("Visit a bank branch or the JanSamarth portal.", "Fill the Mudra loan application with your business plan.", "The bank checks and decides on the loan."),
-           "https://www.mudra.org.in/", "https://www.jansamarth.in/", mode="both",
+           "https://www.mudra.org.in/", application_url="https://www.jansamarth.in/", mode="both",
            criteria={"age_min": 18, "rules": {"occupation": ["business", "artisan"]}}),
 
     scheme("pmegp", L("PMEGP", "पीएमईजीपी", "পিএমইজিপি"), "Prime Minister's Employment Generation Programme",

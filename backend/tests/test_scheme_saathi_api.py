@@ -24,7 +24,7 @@ class TestPublic:
     def test_health_meta(self):
         assert requests.get(f"{API}/health").json() == {"ok": True}
         m = requests.get(f"{API}/meta").json()
-        assert m["ai_available"] is True and len(m["state_codes"]) == 36
+        assert m["ai_available"] == True and len(m["state_codes"]) == 36
         assert "GEMINI" not in str(m) and "AIza" not in str(m)
 
     def test_list_and_detail(self):
@@ -82,7 +82,7 @@ class TestAI:
         assert r.status_code == 200
         d = r.json()
         print("explain:", d.get("available"), d.get("reason"))
-        assert d["available"] is True
+        assert d["available"] == True
         assert any("\u0900" <= ch <= "\u097F" for ch in d["explanation"]["summary"])
 
     def test_recommend_bn(self):
@@ -119,7 +119,7 @@ class TestAuth:
         assert requests.post(f"{API}/admin/schemes", headers=member.h(), json=scheme_payload()).status_code == 403
 
     def test_admin_system_users(self, admin):
-        assert requests.get(f"{API}/admin/system", headers=admin.h()).json()["gemini_configured"] is True
+        assert requests.get(f"{API}/admin/system", headers=admin.h()).json()["gemini_configured"] == True
         u = requests.get(f"{API}/users", headers=admin.h()).json()
         assert "admin" in u["roles"] and any(x["user_id"] == ADMIN_UID for x in u["users"])
 
@@ -156,29 +156,42 @@ class TestAdminCRUD:
             db.schemes.delete_one({"id": sid})
             db.explanations.delete_many({"scheme_id": sid})
 
-    def test_crud_flow(self, admin):
-        r = requests.post(f"{API}/admin/schemes", headers=admin.h(), json=scheme_payload())
+    def _create(self, admin, name="TEST_Scheme Alpha"):
+        r = requests.post(f"{API}/admin/schemes", headers=admin.h(), json=scheme_payload(name))
         assert r.status_code == 200, r.text
-        s = r.json()
-        sid = s["id"]
+        sid = r.json()["id"]
         self.created.append(sid)
+        return sid, r.json()
+
+    def test_create_and_read(self, admin):
+        sid, s = self._create(admin)
         assert s["states"] == [] and s["source_status"] == "unverified"
         assert requests.get(f"{API}/schemes/{sid}").json()["name"]["en"] == "TEST_Scheme Alpha"
-        # update
-        p = scheme_payload("TEST_Scheme Beta")
-        u = requests.put(f"{API}/admin/schemes/{sid}", headers=admin.h(), json=p)
-        assert u.status_code == 200 and requests.get(f"{API}/schemes/{sid}").json()["name"]["en"] == "TEST_Scheme Beta"
-        # verify
+
+    def test_update_flow(self, admin):
+        sid, _ = self._create(admin, "TEST_Scheme Update")
+        payload = scheme_payload("TEST_Scheme Beta")
+        u = requests.put(f"{API}/admin/schemes/{sid}", headers=admin.h(), json=payload)
+        assert u.status_code == 200
+        assert requests.get(f"{API}/schemes/{sid}").json()["name"]["en"] == "TEST_Scheme Beta"
+
+    def test_verify_flow(self, admin):
+        sid, _ = self._create(admin, "TEST_Scheme Verify")
         v = requests.post(f"{API}/admin/schemes/{sid}/verify", headers=admin.h()).json()
         assert v["source_status"] == "verified" and v["last_checked"] == date.today().isoformat()
-        # archive -> hidden publicly
+
+    def test_archive_hides_publicly(self, admin):
+        sid, _ = self._create(admin, "TEST_Scheme Archive")
         a = requests.post(f"{API}/admin/schemes/{sid}/archive", headers=admin.h(), json={"archived": True})
-        assert a.json()["archived"] is True
+        assert a.json()["archived"] == True
         assert requests.get(f"{API}/schemes/{sid}").status_code == 404
         assert sid not in [x["id"] for x in requests.get(f"{API}/schemes").json()]
         assert sid not in [x["scheme_id"] for x in requests.post(f"{API}/match", json={"topics": ["all"]}).json()["results"]]
         assert sid in [x["id"] for x in requests.get(f"{API}/admin/schemes", headers=admin.h()).json()]
-        # restore
+
+    def test_restore_after_archive(self, admin):
+        sid, _ = self._create(admin, "TEST_Scheme Restore")
+        requests.post(f"{API}/admin/schemes/{sid}/archive", headers=admin.h(), json={"archived": True})
         requests.post(f"{API}/admin/schemes/{sid}/archive", headers=admin.h(), json={"archived": False})
         assert requests.get(f"{API}/schemes/{sid}").status_code == 200
 

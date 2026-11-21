@@ -381,14 +381,28 @@ async def _generate_explanation(doc: dict, lang: str, version: str):
     return data
 
 
-@api.post("/recommend")
-async def recommend(body: RecommendIn):
-    docs = await active_schemes()
+def _rank_candidates(docs: list, body: RecommendIn) -> list:
+    """Return the top-5 matched schemes for recommendation, optionally narrowed to body.scheme_ids."""
     ranked, _ = match(docs, body.topics, body.state, body.mode, body.answers)
     if body.scheme_ids:
         wanted = set(body.scheme_ids)
         ranked = [r for r in ranked if r["scheme_id"] in wanted] or ranked
-    ranked = ranked[:5]
+    return ranked[:5]
+
+
+def _ai_response(rec: Recommendation, ranked: list, candidate_ids: set, base: dict) -> dict:
+    """Shape the final AI recommendation payload, keeping only grounded alternatives."""
+    best = next(r for r in ranked if r["scheme_id"] == rec.best_scheme_id)
+    alternatives = [a.model_dump() for a in rec.alternatives
+                    if a.scheme_id in candidate_ids and a.scheme_id != rec.best_scheme_id]
+    return {"source": "ai", **rec.model_dump(), "alternatives": alternatives,
+            "pending_codes": best["pending"], **base}
+
+
+@api.post("/recommend")
+async def recommend(body: RecommendIn):
+    docs = await active_schemes()
+    ranked = _rank_candidates(docs, body)
     if not ranked:
         return {"source": "none"}
     by_id = {d["id"]: d for d in docs}
@@ -399,10 +413,7 @@ async def recommend(body: RecommendIn):
     rec = await _ai_recommendation(body, candidates)
     if rec is None:
         return {**rules_recommendation(ranked), **base, "ai_reason": "failed"}
-    best = next(r for r in ranked if r["scheme_id"] == rec.best_scheme_id)
-    ids = {c["id"] for c in candidates}
-    alternatives = [a.model_dump() for a in rec.alternatives if a.scheme_id in ids and a.scheme_id != rec.best_scheme_id]
-    return {"source": "ai", **rec.model_dump(), "alternatives": alternatives, "pending_codes": best["pending"], **base}
+    return _ai_response(rec, ranked, {c["id"] for c in candidates}, base)
 
 
 async def _ai_recommendation(body: RecommendIn, candidates: list) -> Optional[Recommendation]:
@@ -411,11 +422,14 @@ async def _ai_recommendation(body: RecommendIn, candidates: list) -> Optional[Re
               f"{json.dumps(answers_for_ai(body.answers), ensure_ascii=False)}\nTopics chosen: {body.topics}\n"
               f"State/UT code: {body.state or 'not given'}; scope: {body.mode}\n"
               f"Candidate scheme records (JSON):\n{json.dumps(candidates, ensure_ascii=False)}")
+    rec: Optional[Recommendation] = None
     try:
         rec = await gemini_json(RECOMMEND_SYSTEM, prompt, Recommendation)
     except (AIUnavailable, AIFailed):
         return None
-    return rec if rec.best_scheme_id in {c["id"] for c in candidates} else None
+    if rec is None or rec.best_scheme_id not in {c["id"] for c in candidates}:
+        return None
+    return rec
 
 
 # ---------- Users & roles ----------
