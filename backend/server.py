@@ -95,7 +95,7 @@ class Criteria(BaseModel):
         for key, vals in v.items():
             if key not in RULE_KEYS or any(x not in ANSWER_OPTIONS[key] for x in vals):
                 raise ValueError(f"Invalid criteria rule: {key}")
-        return {k: vals for k, vals in v.items() if vals}
+        return {k: allowed for k, allowed in v.items() if allowed}
 
 
 class SchemeIn(BaseModel):
@@ -342,13 +342,7 @@ async def explain(scheme_id: str, lang: Literal["en", "hi", "bn"] = "hi"):
     key = (scheme_id, lang, version)
     if time.monotonic() < _EXPLAIN_FAILED.get(key, 0):
         return {"available": False, "reason": "failed"}
-    if key not in _EXPLAIN_INFLIGHT:
-        _EXPLAIN_INFLIGHT[key] = asyncio.ensure_future(_generate_explanation(doc, lang, version))
-    try:
-        data = await asyncio.shield(_EXPLAIN_INFLIGHT[key])
-    finally:
-        if _EXPLAIN_INFLIGHT.get(key) and _EXPLAIN_INFLIGHT[key].done():
-            _EXPLAIN_INFLIGHT.pop(key, None)
+    data = await _shared_explanation(key, doc, lang, version)
     if data is None:
         _EXPLAIN_FAILED[key] = time.monotonic() + 120
         return {"available": False, "reason": "failed"}
@@ -357,6 +351,18 @@ async def explain(scheme_id: str, lang: Literal["en", "hi", "bn"] = "hi"):
 
 _EXPLAIN_INFLIGHT: dict = {}
 _EXPLAIN_FAILED: dict = {}
+
+
+async def _shared_explanation(key, doc: dict, lang: str, version: str):
+    # Concurrent requests for the same scheme/lang share one Gemini call.
+    if key not in _EXPLAIN_INFLIGHT:
+        _EXPLAIN_INFLIGHT[key] = asyncio.ensure_future(_generate_explanation(doc, lang, version))
+    task = _EXPLAIN_INFLIGHT[key]
+    try:
+        return await asyncio.shield(task)
+    finally:
+        if task.done():
+            _EXPLAIN_INFLIGHT.pop(key, None)
 
 
 async def _generate_explanation(doc: dict, lang: str, version: str):
@@ -390,6 +396,17 @@ async def recommend(body: RecommendIn):
     base = {"candidates": [{**r, "scheme": card(by_id[r["scheme_id"]])} for r in ranked]}
     if not ai_configured():
         return {**rules_recommendation(ranked), **base, "ai_reason": "not_configured"}
+    rec = await _ai_recommendation(body, candidates)
+    if rec is None:
+        return {**rules_recommendation(ranked), **base, "ai_reason": "failed"}
+    best = next(r for r in ranked if r["scheme_id"] == rec.best_scheme_id)
+    ids = {c["id"] for c in candidates}
+    alternatives = [a.model_dump() for a in rec.alternatives if a.scheme_id in ids and a.scheme_id != rec.best_scheme_id]
+    return {"source": "ai", **rec.model_dump(), "alternatives": alternatives, "pending_codes": best["pending"], **base}
+
+
+async def _ai_recommendation(body: RecommendIn, candidates: list) -> Optional[Recommendation]:
+    """Gemini recommendation grounded in the candidate records; None when unavailable or not grounded."""
     prompt = (f"Write the answer in {LANG_NAMES[body.lang]}.\nPerson's answers (bucketed, no identity):\n"
               f"{json.dumps(answers_for_ai(body.answers), ensure_ascii=False)}\nTopics chosen: {body.topics}\n"
               f"State/UT code: {body.state or 'not given'}; scope: {body.mode}\n"
@@ -397,13 +414,8 @@ async def recommend(body: RecommendIn):
     try:
         rec = await gemini_json(RECOMMEND_SYSTEM, prompt, Recommendation)
     except (AIUnavailable, AIFailed):
-        return {**rules_recommendation(ranked), **base, "ai_reason": "failed"}
-    ids = {c["id"] for c in candidates}
-    if rec.best_scheme_id not in ids:
-        return {**rules_recommendation(ranked), **base, "ai_reason": "failed"}
-    best = next(r for r in ranked if r["scheme_id"] == rec.best_scheme_id)
-    return {"source": "ai", **rec.model_dump(), "alternatives": [a.model_dump() for a in rec.alternatives if a.scheme_id in ids and a.scheme_id != rec.best_scheme_id],
-            "pending_codes": best["pending"], **base}
+        return None
+    return rec if rec.best_scheme_id in {c["id"] for c in candidates} else None
 
 
 # ---------- Users & roles ----------

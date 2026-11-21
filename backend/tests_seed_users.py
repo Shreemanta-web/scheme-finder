@@ -9,7 +9,6 @@ def bapi(path, body=None, method="POST"):
     return json.load(urllib.request.urlopen(req))
 db = MongoClient(os.environ["MONGO_URL"])[os.environ["DB_NAME"]]
 for email, role in [("admin+clerk_test@example.com", "admin"), ("member+clerk_test@example.com", "member")]:
-    found = bapi(f"/users?email_address={urllib.parse.quote(email)}", method="GET") if False else None
     try:
         u = bapi("/users", {"email_address": [email], "password": "Test-pass-12345!", "skip_password_checks": True})
     except urllib.error.HTTPError:

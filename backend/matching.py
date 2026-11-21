@@ -58,47 +58,60 @@ def _range_status(user_rng, lo, hi):
     return "pending"
 
 
+def _age_status(c: dict, answers: dict):
+    vals = _known_values(answers.get("age"))
+    return "pending" if not vals else _range_status(AGE[vals[0]], c.get("age_min") or 0, c.get("age_max") or 200)
+
+
+def _income_status(c: dict, answers: dict):
+    vals = _known_values(answers.get("income"))
+    return "pending" if not vals else _range_status(INCOME[vals[0]], 0, c["income_max"])
+
+
+def _rule_status(answer, allowed):
+    vals = _known_values(answer)
+    if not vals:
+        return "pending"
+    return "met" if set(vals) & set(allowed) else "fail"
+
+
 def evaluate(scheme: dict, answers: dict):
     c = scheme.get("criteria") or {}
     out = {"met": [], "pending": [], "fail": []}
     if c.get("age_min") is not None or c.get("age_max") is not None:
-        vals = _known_values(answers.get("age"))
-        lo, hi = c.get("age_min") or 0, c.get("age_max") or 200
-        out["pending" if not vals else _range_status(AGE[vals[0]], lo, hi)].append("age")
+        out[_age_status(c, answers)].append("age")
     if c.get("income_max") is not None:
-        vals = _known_values(answers.get("income"))
-        out["pending" if not vals else _range_status(INCOME[vals[0]], 0, c["income_max"])].append("income")
+        out[_income_status(c, answers)].append("income")
     for key, allowed in (c.get("rules") or {}).items():
-        if not allowed:
-            continue
-        vals = _known_values(answers.get(key))
-        if not vals:
-            out["pending"].append(key)
-        else:
-            out["met" if set(vals) & set(allowed) else "fail"].append(key)
+        if allowed:
+            out[_rule_status(answers.get(key), allowed)].append(key)
     if c.get("list_based"):
         out["pending"].append("official_list")
     return out
 
 
+def _in_scope(s: dict, topics, state, mode) -> bool:
+    if s["jurisdiction"] == "state" and (mode != "both" or not state or state not in s.get("states", [])):
+        return False
+    return not topics or "all" in topics or any(t in topics for t in s.get("topics", []))
+
+
+def _score(s: dict, topic_hits: list, ev: dict) -> int:
+    score = (40 if topic_hits else 10) + 15 * len(ev["met"]) - 4 * len(ev["pending"])
+    score += 6 if s["jurisdiction"] == "state" else 0
+    return score + (3 if s.get("source_status") == "verified" else 0)
+
+
 def match(schemes, topics, state, mode, answers):
-    browse_all = not topics or "all" in topics
     results, excluded = [], []
-    for s in schemes:
-        if s["jurisdiction"] == "state" and (mode != "both" or not state or state not in s.get("states", [])):
-            continue
+    for s in (s for s in schemes if _in_scope(s, topics, state, mode)):
         topic_hits = [t for t in s.get("topics", []) if t in topics]
-        if not browse_all and not topic_hits:
-            continue
         ev = evaluate(s, answers)
         if ev["fail"]:
             excluded.append({"id": s["id"], "name": s["name"], "failed": ev["fail"]})
             continue
-        score = (40 if topic_hits else 10) + 15 * len(ev["met"]) - 4 * len(ev["pending"])
-        score += 6 if s["jurisdiction"] == "state" else 0
-        score += 3 if s.get("source_status") == "verified" else 0
         results.append({
-            "scheme_id": s["id"], "score": score,
+            "scheme_id": s["id"], "score": _score(s, topic_hits, ev),
             "level": "strong" if ev["met"] and not ev["pending"] else "possible",
             "topic_hits": topic_hits, "met": ev["met"], "pending": ev["pending"],
         })
