@@ -57,7 +57,7 @@ jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
 lazy-importer==0.1.0
 librt==0.16.0
-litellm @ https://customer-assets.emergentagent.com/internal-asset/library/litellm-1.80.0-py3-none-any.whl#sha256=adf398c513273de9341f61822296c6b2145f7f2dc4a69daf3ac04829f5bde3f8
+litellm==1.57.4
 markdown-it-py==4.3.0
 MarkupSafe==3.0.4
 mccabe==0.7.0

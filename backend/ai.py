@@ -35,8 +35,9 @@ def _client():
 
 
 def model_chain() -> List[str]:
+    primary = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
     extra = [m.strip() for m in os.environ.get("GEMINI_FALLBACK_MODELS", "").split(",") if m.strip()]
-    return [os.environ["GEMINI_MODEL"], *[m for m in extra if m != os.environ["GEMINI_MODEL"]]]
+    return [primary, *[m for m in extra if m != primary]]
 
 
 async def gemini_json(system: str, prompt: str, schema):
