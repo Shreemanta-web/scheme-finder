@@ -48,7 +48,7 @@ export function AppProvider({ children }) {
   }, [isSignedIn, getToken]);
 
   const savedLoading = !!isSignedIn && accountSaved === null;
-  const saved = isSignedIn ? accountSaved || [] : localSaved;
+  const saved = useMemo(() => (isSignedIn ? accountSaved || [] : localSaved), [isSignedIn, accountSaved, localSaved]);
   const t = useCallback((key, vars) => translate(lang, key, vars), [lang]);
 
   const toggleSave = useCallback(async (id) => {

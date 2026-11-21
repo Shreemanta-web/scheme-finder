@@ -10,6 +10,8 @@ import SchemeCard from "@/components/SchemeCard";
 import { PageWrap, Disclaimer } from "@/components/Flow";
 import { Loading, ErrorState } from "@/components/States";
 
+const EMPTY_RESULTS = [];
+
 function Chips({ label, options, value, onChange, testPrefix }) {
   return (
     <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
@@ -69,7 +71,7 @@ export default function Results() {
   };
   useEffect(() => { if (!flow.results) load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const results = flow.results || [];
+  const results = flow.results || EMPTY_RESULTS;
   const types = [...new Set(results.map((r) => r.scheme.benefit_type))];
   const shown = useMemo(() => {
     let list = results.filter((r) => (jur === "all" || r.scheme.jurisdiction === jur) && (type === "all" || r.scheme.benefit_type === type) && (level === "all" || r.level === level));
