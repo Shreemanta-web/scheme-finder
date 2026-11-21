@@ -43,9 +43,13 @@ async def gemini_json(system: str, prompt: str, schema):
     client = _client()
     config = types.GenerateContentConfig(system_instruction=system, temperature=0.2,
                                          response_mime_type="application/json", response_schema=schema)
+    deadline = asyncio.get_running_loop().time() + 45  # stay well under the ~60s ingress limit
     for model in model_chain():
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining < 5:
+            break
         try:
-            resp = await asyncio.wait_for(client.aio.models.generate_content(model=model, contents=prompt, config=config), timeout=60)
+            resp = await asyncio.wait_for(client.aio.models.generate_content(model=model, contents=prompt, config=config), timeout=min(remaining, 25))
             return schema.model_validate_json(resp.text)
         except Exception as exc:
             log.warning("Gemini call failed on %s: %s", model, type(exc).__name__)

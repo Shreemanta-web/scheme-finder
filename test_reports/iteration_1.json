@@ -1,0 +1,67 @@
+{
+  "summary": "First full pass on Scheme Saathi. Backend: 25 pytest cases (public catalogue, matching + 422 validation, Gemini explain/recommend, Clerk auth/roles, saved isolation/merge, admin CRUD/verify/archive/restore). On the second run all 25 passed. On the first run 1 failed: /api/recommend took about 63s and the ingress returned a non-JSON error. Frontend: tested end to end with Playwright on desktop and 390px mobile: welcome, language switching and persistence, topics, states (Hindi and Bengali search), questionnaire, results filters/sort/hidden list, compare tray and table, detail page in EN and HI (AI explain plus show original), recommendation in HI (AI source), admin as admin via Clerk ticket (status, verify, archive, restore, form error, users tab), member sees admin-not-allowed, and signed-in merge of saved schemes. Found 1 real functional bug (Broaden search button) plus several minor issues. The seeded catalogue was not changed: verify and archive were run only on TEST_ schemes, which I then deleted.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/recommend (and GET /api/schemes/{id}/explain)", "issue": "Flaky timeout. ai.gemini_json gives each model up to 60s and tries 3 models in a row, so a request can take up to 180s. The ingress cuts requests off at about 60s. Seen live: recommend took 63401 ms (3.8-flash 503 -> 3.7-flash TimeoutError -> 3.5-flash ServerError), and the client got a non-JSON gateway error instead of the rules-based fallback. 1 of about 6 recommend calls failed this way; other calls took 14-40s.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "POST /api/me/saved/{id}, POST /api/me/saved/merge", "issue": "Archived schemes can still be saved: the existence check does not filter archived:{$ne:true}."},
+      {"endpoint": "POST /api/admin/schemes, PUT", "issue": "The 422 error is shown to admins as raw Pydantic text ('String should have at least 2 characters · List should have at least 1 item after validation, not 0'), in English only and not tied to a field."},
+      {"endpoint": "/api/admin/schemes", "issue": "There is no delete endpoint (archive only), so TEST/demo records cannot be removed through the API. Probably intended, but worth noting."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Results.jsx broaden()", "issue": "The 'Broaden search' button does not broaden the search. broaden() calls setFlow({topics:['all']}) and then setTimeout(load,0). load is a stale closure, so it POSTs /api/match with the old topics (seen in the request body: topics:['study']). Results stay empty even though sessionStorage now has topics ['all']. Fix: pass the overrides into load (e.g. load({topics:['all'], mode})) or trigger the reload from a useEffect on flow.topics.", "selector": "[data-testid='results-broaden-btn']", "priority": "HIGH"},
+      {"component": "AppContext saved state (signed-in)", "issue": "Race after a reload or sign-in. While /me/saved/merge is in flight, accountSaved is null, so 'saved' falls back to localSaved (already []). For 1-5s the save button shows aria-pressed=false for schemes that are saved. If the user clicks in that window, a no-op POST runs and the toast says 'Saved to your account' while the state is out of sync. Fix: treat accountSaved===null as loading (disable the button) instead of falling back to localSaved.", "selector": "[data-testid^='save-btn-']", "priority": "MEDIUM"},
+      {"component": "SchemeDetail share()", "issue": "When navigator.share is missing and clipboard.writeText fails (no permission or insecure context), the catch is empty and the user gets no feedback. Add an error toast or a fallback.", "selector": "[data-testid='scheme-share-btn']", "priority": "LOW"},
+      {"component": "AppContext.toggleSave", "issue": "The signed-in path has no try/catch. If the API fails, the promise rejection goes unhandled and no error toast is shown.", "selector": "[data-testid^='save-btn-']", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Language HI/BN on Compare and Recommendation", "issue": "In BN/HI the cell content on the compare table (benefits, eligibility, documents) and the recommendation document checklist items (e.g. 'Aadhaar card') stay in English. Only the detail page uses /explain to translate. Seed records are only partly translated (admin shows 'हि Partial, বা Partial'). Department names also stay in English on the detail page.", "affected_selectors": ["compare-cell-benefits-*", "doc-checklist-item-*"]}
+    ],
+    "design_issues": [
+      {"screen": "Recommendation (HI/BN)", "issues": ["The rec-source-badge eyebrow uses wide letter-spacing and uppercase tracking on Devanagari and Bangla text ('A I स ु झ ा व'), which breaks up the characters. Turn off tracking for :lang(hi) and :lang(bn)."]},
+      {"screen": "Results / Questionnaire copy", "issues": ["Plural forms are wrong: '1 possible matches', '1 schemes hidden'.", "Occupation subtitle is missing punctuation: 'Choose all that apply You can choose more than one.'"]},
+      {"screen": "Compare at 390px", "issues": ["The table has min-w 720px and scrolls sideways inside its container. There is no page overflow, but there is no visual hint that it scrolls. Consider a sticky first column or a scroll hint."]}
+    ]
+  },
+  "passed_checks": [
+    "Welcome -> /language; the language switcher changes nav, buttons, questions, results and detail labels; the choice persists after reload (localStorage ss_lang)",
+    "Topics: topics-error with no selection; aria-pressed plus checkmark; results-edit-topics-btn goes back to /topics with the selection kept",
+    "State: 36 options; Hindi search 'बंगाल' and Bengali search 'পশ্চিম' both find WB; state-error; state-no-results; central-only lets you continue without a state",
+    "Questionnaire: wizard-error, why-we-ask, back keeps the answer, skip, not-sure, prefer-not on sensitive questions, multi-select occupation, progress 'Question n of 7'",
+    "Results: WB state schemes appear only with WB + both; central mode excludes them; filters, sort, disclaimer and hidden list all work",
+    "Compare: max 4 toast, tray, /compare table with all rows, remove updates the URL, compare-recommend-btn passes ids",
+    "Detail: official link (target _blank), 'Not yet checked by our team', unverified warning, 'Not confirmed' period, 3 numbered steps, save to localStorage plus toast; HI explain shows scheme-ai-notice and Hindi content, show original shows English",
+    "Recommendation HI: source=ai, best scheme is one of the candidates, text in Hindi, checklist progress 0/4 -> 1/4, alternatives, apply link to the official URL",
+    "Admin UI: ai-status configured, verify sets Verified plus today's date, archive hides the row, restore brings it back (public GET 200), form error shows, users tab; member sees admin-not-allowed",
+    "No 'AIza' in the built JS bundle. The only 'GEMINI_API_KEY' hits are the variable name inside the i18n admin help text, not the key itself",
+    "390px: no page-level horizontal overflow on any page; the language switcher stays visible in the mobile header; reduced-motion CSS keeps press feedback (outline/brightness)"
+  ],
+  "test_report_links": ["/app/backend/tests/test_scheme_saathi_api.py", "/app/backend/tests/conftest.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix Results broaden(): it reloads with stale topics, so results stay empty",
+    "Cap the total Gemini time per request below about 50s (e.g. a shared deadline across the model chain, 15-20s per model) so /recommend and /explain always come back with the rules fallback before the ingress timeout",
+    "Fix the signed-in saved-state race (treat accountSaved null as loading)",
+    "Filter archived schemes in save_scheme and merge_saved",
+    "Show friendly, translated, field-level admin form errors instead of raw Pydantic text",
+    "Translate or AI-explain the content on the compare table and recommendation document checklist in HI/BN",
+    "Fix plural forms and letter-spacing on Indic scripts"
+  ],
+  "critical_code_review_comments": [
+    "ai.py: wait_for(timeout=60) per model across a 3-model chain makes worst-case latency 180s, which is far over the ingress limit. Use one overall deadline.",
+    "Results.jsx: setTimeout(load,0) after setFlow is a stale-closure pattern; load reads flow from the previous render.",
+    "server.py current_member: calls the Clerk API synchronously in a threadpool on first sign-in only, which is fine. The ADMIN_EMAIL check requires a verified email, which is good.",
+    "server.py set_role: the 'last admin' count uses role 'admin' in IN_ENV, which is fine. Consider also blocking self-demotion when only one admin is left (already covered by the count).",
+    "/app/memory/test_credentials.md is an empty template. Credentials only came from the briefing. The main agent should write the test users there (admin+clerk_test@example.com / member+clerk_test@example.com, Clerk user ids, ticket method)."
+  ],
+  "updated_files": ["/app/backend/tests/conftest.py", "/app/backend/tests/test_scheme_saathi_api.py", "/app/backend/tests/make_ticket.py", "/app/backend/tests/make_test_scheme.py", "/app/backend/tests/cleanup_helpers.py"],
+  "success_rate": {"backend": "96% (25/25 on rerun; recommend flaky about 1 in 6 because of the timeout)", "frontend": "90% (broaden button broken; saved-state race)"},
+  "test_credentials": "/app/memory/test_credentials.md is EMPTY. I used the briefing credentials: admin user_3MP7ehW4YPFltXjDqsuNQ9jrugo, member user_3MP7eiIIQ5XILY95eLOlukTh3zi. Tickets come from /app/backend/tests/make_ticket.py admin|member; then open /sign-in?__clerk_ticket=<token>.",
+  "seed_data_creation": "None kept. TEST_ schemes were created for the admin tests and deleted by id. The member's saved list was cleared. The seeded 21 schemes are unchanged (0 verified, 0 archived).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run pytest from /app/backend/tests with -c /app/backend/pytest.ini. conftest.TokenProvider mints Clerk session JWTs via POST /v1/sessions then /tokens (JWTs last 60s, so the provider refreshes them). For UI admin tests: python make_ticket.py admin -> /sign-in?__clerk_ticket=... (each new browser context needs a fresh ticket). Never verify or archive seed schemes. Create one with make_test_scheme.py and remove it with cleanup_helpers.py --clean <id>. Gemini calls take 14-60s.",
+  "rca of the issue": "Broaden: Results.broaden() -> setFlow({topics:['all']}) schedules a state update, but setTimeout(load,0) runs the load function from the current render, whose 'flow' still holds the old topics. Reproduce: sessionStorage ss_flow={topics:['study'],mode:'central',answers:{gender:'male',category:'general',girl_child:'no',education:'not_studying'}} -> /results -> click results-broaden-btn -> the /api/match body still has topics ['study'] and the results stay empty. Recommend timeout: per-model 60s timeouts run one after another across GEMINI_FALLBACK_MODELS, while the ingress limit is about 60s."
+}

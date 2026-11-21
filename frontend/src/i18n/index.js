@@ -23,3 +23,5 @@ export function translate(lang, key, vars) {
 export const loc = (obj, lang) => (obj && (obj[lang] || obj.en)) || "";
 export const locList = (obj, lang) => (obj && (obj[lang]?.length ? obj[lang] : obj.en)) || [];
 export const isFallback = (obj, lang) => lang !== "en" && !!obj && !obj[lang]?.length;
+export const pickText = (s, e, lang, f) => (lang !== "en" && s[f]?.[lang]) || e?.[f] || s[f]?.en || "";
+export const pickItems = (s, e, lang, f) => (lang !== "en" && s[f]?.[lang]?.length ? s[f][lang] : e?.[f]?.length ? e[f] : s[f]?.en || []);

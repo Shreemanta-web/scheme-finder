@@ -6,11 +6,11 @@ import { JurisdictionBadge, StatusBadge, LevelBadge } from "@/components/Badges"
 import { ReasonList } from "@/components/Reasons";
 
 export function SaveButton({ id, dark, withLabel }) {
-  const { t, saved, toggleSave } = useApp();
+  const { t, saved, savedLoading, toggleSave } = useApp();
   const on = saved.includes(id);
   return (
-    <button onClick={() => toggleSave(id)} aria-pressed={on} data-testid={`save-btn-${id}`} aria-label={on ? t("common.unsave") : t("common.save")}
-      className={`press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full border px-3 text-sm font-medium ${dark ? "border-white/20 text-white hover:bg-white/10" : "border-[#DADAD4] bg-white hover:border-[#0B0B0C]"} ${on ? (dark ? "!border-[#C6F432] text-[#C6F432]" : "!border-[#0B0B0C] bg-[#F7FDE4]") : ""}`}>
+    <button onClick={() => toggleSave(id)} disabled={savedLoading} aria-busy={savedLoading} aria-pressed={on} data-testid={`save-btn-${id}`} aria-label={on ? t("common.unsave") : t("common.save")}
+      className={`press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-full border px-3 text-sm font-medium disabled:opacity-50 ${dark ? "border-white/20 text-white hover:bg-white/10" : "border-[#DADAD4] bg-white hover:border-[#0B0B0C]"} ${on ? (dark ? "!border-[#C6F432] text-[#C6F432]" : "!border-[#0B0B0C] bg-[#F7FDE4]") : ""}`}>
       {on ? <BookmarkCheck className="h-4 w-4" aria-hidden /> : <Bookmark className="h-4 w-4" aria-hidden />}
       {withLabel && (on ? t("common.saved") : t("common.save"))}
     </button>

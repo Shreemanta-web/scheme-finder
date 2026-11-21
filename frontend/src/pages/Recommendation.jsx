@@ -3,7 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Sparkles, ListChecks, ArrowRight, MessageCircleQuestion, Check, Scale } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { http } from "@/lib/api";
-import { loc, locList } from "@/i18n";
+import { loc, pickItems } from "@/i18n";
+import useExplanations from "@/lib/useExplanations";
 import { OPTIONS } from "@/lib/questions";
 import { JurisdictionBadge, StatusBadge } from "@/components/Badges";
 import { ReasonList } from "@/components/Reasons";
@@ -12,9 +13,18 @@ import { PageWrap, Disclaimer } from "@/components/Flow";
 import { Loading, ErrorState } from "@/components/States";
 import { ApplyButtons } from "@/pages/SchemeDetail";
 
+function NextSteps({ scheme }) {
+  const { lang } = useApp();
+  const ex = useExplanations([scheme.id], lang);
+  return pickItems(scheme, ex[scheme.id], lang, "steps").map((s, n) => (
+    <li key={n} className="flex gap-3"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#0B0B0C] text-xs font-semibold text-[#C6F432]">{n + 1}</span>{s}</li>
+  ));
+}
+
 function Checklist({ scheme }) {
   const { t, lang } = useApp();
-  const docs = locList(scheme.documents, lang);
+  const ex = useExplanations([scheme.id], lang);
+  const docs = pickItems(scheme, ex[scheme.id], lang, "documents");
   const key = `ss_docs_${scheme.id}`;
   const [done, setDone] = useState(() => JSON.parse(sessionStorage.getItem(key) || "[]"));
   const toggle = (i) => { const next = done.includes(i) ? done.filter((x) => x !== i) : [...done, i]; setDone(next); sessionStorage.setItem(key, JSON.stringify(next)); };
@@ -130,9 +140,7 @@ export default function Recommendation() {
             })}
           </ul>
           <h2 className="mb-3 mt-8 font-display text-xl font-semibold">{t("rec.nextSteps")}</h2>
-          <ol className="grid gap-3 text-[15px] text-[#3f3f46]">
-            {locList(best.steps, lang).map((s, n) => <li key={n} className="flex gap-3"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[#0B0B0C] text-xs font-semibold text-[#C6F432]">{n + 1}</span>{s}</li>)}
-          </ol>
+          <ol className="grid gap-3 text-[15px] text-[#3f3f46]"><NextSteps scheme={best} /></ol>
         </section>
       </div>
       <Disclaimer className="mt-6" />

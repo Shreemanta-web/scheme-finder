@@ -74,7 +74,7 @@ export default function SchemeDetail() {
     try {
       if (navigator.share) await navigator.share({ title: name, url });
       else { await navigator.clipboard.writeText(url); toast.success(t("common.linkCopied")); }
-    } catch {}
+    } catch (err) { if (err?.name !== "AbortError") toast.error(`${t("common.error")} ${url}`); }
   };
   const readText = [name, pick("summary"), pick("benefits"), ...pickList("eligibility")].join(". ");
 

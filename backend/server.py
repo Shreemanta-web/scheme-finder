@@ -443,7 +443,7 @@ async def my_saved(member: dict = Depends(current_member)):
 
 @api.post("/me/saved/merge")
 async def merge_saved(body: IdsIn, member: dict = Depends(current_member)):
-    valid = {d["id"] for d in await db.schemes.find({"id": {"$in": body.ids}}, {"_id": 0, "id": 1}).to_list(100)}
+    valid = {d["id"] for d in await db.schemes.find({"id": {"$in": body.ids}, "archived": {"$ne": True}}, {"_id": 0, "id": 1}).to_list(100)}
     for sid in valid:
         await db.saved.update_one({"user_id": member["user_id"], "scheme_id": sid},
                                   {"$setOnInsert": {"saved_at": datetime.now(timezone.utc).isoformat()}}, upsert=True)
@@ -452,7 +452,7 @@ async def merge_saved(body: IdsIn, member: dict = Depends(current_member)):
 
 @api.post("/me/saved/{scheme_id}")
 async def save_scheme(scheme_id: str, member: dict = Depends(current_member)):
-    if not await db.schemes.find_one({"id": scheme_id}, {"_id": 1}):
+    if not await db.schemes.find_one({"id": scheme_id, "archived": {"$ne": True}}, {"_id": 1}):
         raise HTTPException(404, "Scheme not found")
     await db.saved.update_one({"user_id": member["user_id"], "scheme_id": scheme_id},
                               {"$setOnInsert": {"saved_at": datetime.now(timezone.utc).isoformat()}}, upsert=True)

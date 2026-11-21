@@ -6,6 +6,6 @@ export const withAuth = async (getToken) => ({ headers: { Authorization: `Bearer
 export const errorText = (e, fallback) => {
   const d = e?.response?.data?.detail;
   if (typeof d === "string") return d;
-  if (Array.isArray(d) && d[0]?.msg) return d.map((x) => x.msg.replace(/^Value error, /, "")).join(" · ");
+  if (Array.isArray(d) && d[0]?.msg) return d.map((x) => `${x.loc?.length > 1 ? `${x.loc.slice(1).join(".")}: ` : ""}${x.msg.replace(/^Value error, /, "")}`).join(" · ");
   return fallback;
 };

@@ -43,6 +43,7 @@
   h1, h2, h3, .font-display { font-family: "Outfit", "Noto Sans Devanagari", "Noto Sans Bengali", sans-serif; letter-spacing: -0.01em; }
   html[data-lang="hi"] h1, html[data-lang="hi"] h2, html[data-lang="hi"] h3,
   html[data-lang="bn"] h1, html[data-lang="bn"] h2, html[data-lang="bn"] h3 { letter-spacing: 0; line-height: 1.35; }
+  html[data-lang="hi"] .eyebrow, html[data-lang="bn"] .eyebrow { letter-spacing: 0; text-transform: none; font-size: 0.8rem; }
   ::selection { background: var(--lime); color: var(--ink); }
   :focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; box-shadow: 0 0 0 5px var(--ink); border-radius: 10px; }
 }

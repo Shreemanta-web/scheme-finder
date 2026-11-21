@@ -47,22 +47,26 @@ export function AppProvider({ children }) {
     })();
   }, [isSignedIn, getToken]);
 
-  const saved = isSignedIn && accountSaved ? accountSaved : localSaved;
+  const savedLoading = !!isSignedIn && accountSaved === null;
+  const saved = isSignedIn ? accountSaved || [] : localSaved;
   const t = useCallback((key, vars) => translate(lang, key, vars), [lang]);
 
   const toggleSave = useCallback(async (id) => {
+    if (savedLoading) return;
     const has = saved.includes(id);
     if (isSignedIn) {
-      const cfg = await withAuth(getToken);
-      if (has) await http.delete(`/me/saved/${id}`, cfg); else await http.post(`/me/saved/${id}`, {}, cfg);
-      setAccountSaved((s) => (has ? s.filter((x) => x !== id) : [...(s || []), id]));
-      toast.success(translate(lang, has ? "detail.removed" : "detail.savedAccount"));
+      try {
+        const cfg = await withAuth(getToken);
+        if (has) await http.delete(`/me/saved/${id}`, cfg); else await http.post(`/me/saved/${id}`, {}, cfg);
+        setAccountSaved((s) => (has ? s.filter((x) => x !== id) : [...(s || []), id]));
+        toast.success(translate(lang, has ? "detail.removed" : "detail.savedAccount"));
+      } catch { toast.error(translate(lang, "common.error")); }
     } else {
       const next = has ? localSaved.filter((x) => x !== id) : [...localSaved, id];
       setLocalSaved(next); localStorage.setItem("ss_saved", JSON.stringify(next));
       toast.success(translate(lang, has ? "detail.removed" : "detail.savedDevice"));
     }
-  }, [saved, isSignedIn, getToken, localSaved, lang]);
+  }, [saved, savedLoading, isSignedIn, getToken, localSaved, lang]);
 
   const clearSaved = useCallback(async () => {
     if (isSignedIn) { await http.delete("/me/saved", await withAuth(getToken)); setAccountSaved([]); }
@@ -70,9 +74,9 @@ export function AppProvider({ children }) {
   }, [isSignedIn, getToken]);
 
   const value = useMemo(() => ({
-    lang, setLang, langChosen, t, flow, setFlow, resetFlow, saved, toggleSave, clearSaved, me, isSignedIn,
+    lang, setLang, langChosen, t, flow, setFlow, resetFlow, saved, savedLoading, toggleSave, clearSaved, me, isSignedIn,
     speechLang: LANGS.find((l) => l.code === lang)?.speech,
-  }), [lang, setLang, langChosen, t, flow, setFlow, resetFlow, saved, toggleSave, clearSaved, me, isSignedIn]);
+  }), [lang, setLang, langChosen, t, flow, setFlow, resetFlow, saved, savedLoading, toggleSave, clearSaved, me, isSignedIn]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

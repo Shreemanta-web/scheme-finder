@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { X, Sparkles, ArrowLeft } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { http } from "@/lib/api";
-import { loc, locList } from "@/i18n";
+import { loc, pickText, pickItems } from "@/i18n";
+import useExplanations from "@/lib/useExplanations";
 import { JurisdictionBadge, StatusBadge, LevelBadge } from "@/components/Badges";
 import { PageWrap, PageTitle, Disclaimer } from "@/components/Flow";
 import { Loading, ErrorState } from "@/components/States";
@@ -26,6 +27,7 @@ export default function Compare() {
     setFlow({ compare: next });
     navigate(`/compare?ids=${next.join(",")}`, { replace: true });
   };
+  const ex = useExplanations((schemes || []).map((s) => s.id), lang);
   if (error) return <ErrorState onRetry={load} />;
   if (!schemes) return <Loading />;
   const matchOf = (id) => (flow.results || []).find((r) => r.scheme_id === id);
@@ -33,9 +35,9 @@ export default function Compare() {
   const rows = [
     ["jurisdiction", (s) => <JurisdictionBadge scheme={s} />],
     ["match", (s) => (matchOf(s.id) ? <LevelBadge level={matchOf(s.id).level} /> : "—")],
-    ["benefits", (s) => loc(s.benefits, lang)],
-    ["eligibility", (s) => <List items={locList(s.eligibility, lang)} />],
-    ["documents", (s) => <List items={locList(s.documents, lang)} />],
+    ["benefits", (s) => pickText(s, ex[s.id], lang, "benefits")],
+    ["eligibility", (s) => <List items={pickItems(s, ex[s.id], lang, "eligibility")} />],
+    ["documents", (s) => <List items={pickItems(s, ex[s.id], lang, "documents")} />],
     ["method", (s) => t(`compare.${s.application_mode}`)],
     ["period", (s) => s.application_window || <span className="text-[#71717A]">{t("detail.periodUnknown")}</span>],
     ["status", (s) => <StatusBadge scheme={s} />],

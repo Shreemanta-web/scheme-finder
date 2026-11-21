@@ -55,11 +55,12 @@ export default function Results() {
   const [sort, setSort] = useState("relevance");
   const [showHidden, setShowHidden] = useState(false);
 
-  const load = async () => {
+  const load = async (override = {}) => {
     setStatus("loading");
+    const f = { ...flow, ...override };
     try {
       const [{ data }] = await Promise.all([
-        http.post("/match", { topics: flow.topics, state: flow.mode === "central" ? null : flow.state, mode: flow.mode, answers: flow.answers }),
+        http.post("/match", { topics: f.topics, state: f.mode === "central" ? null : f.state, mode: f.mode, answers: f.answers }),
         new Promise((r) => setTimeout(r, 600)),
       ]);
       setFlow({ results: data.results, excluded: data.excluded, compare: (flow.compare || []).filter((id) => data.results.some((r) => r.scheme_id === id)) });
@@ -82,7 +83,7 @@ export default function Results() {
     if (!cur.includes(id) && cur.length >= 4) return toast.info(t("results.compareMax"));
     setFlow({ compare: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] });
   };
-  const broaden = () => { setFlow({ topics: ["all"], mode: flow.state ? "both" : flow.mode, results: null }); setTimeout(load, 0); };
+  const broaden = () => { const o = { topics: ["all"], mode: flow.state ? "both" : flow.mode }; setFlow({ ...o, results: null }); load(o); };
 
   if (status === "loading") return <Loading text={t("results.loading")} />;
   if (status === "error") return <ErrorState onRetry={load} />;
