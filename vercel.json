@@ -8,6 +8,8 @@
     "frontend": {
       "root": "frontend",
       "framework": "create-react-app",
+      "installCommand": "yarn install",
+      "buildCommand": "yarn build",
       "bindings": [
         {
           "type": "service",
